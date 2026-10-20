@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محل بلايستيشن</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+  body { background: #0f172a; color: #e2e8f0; padding: 15px; }
+  h1 { text-align: center; margin-bottom: 20px; color: #38bdf8; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab-btn { flex: 1; min-width: 120px; padding: 12px; background: #1e293b; border: none; color: #e2e8f0; cursor: pointer; border-radius: 8px; font-size: 15px; font-weight: bold; }
+  .tab-btn.active { background: #38bdf8; color: #0f172a; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .card { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+  .device-card { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 12px; border-right: 4px solid #38bdf8; }
+  .device-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+  .device-name { font-size: 18px; font-weight: bold; color: #38bdf8; }
+  .status { padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+  .status.free { background: #16a34a; }
+  .status.busy { background: #dc2626; }
+  .btn { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; margin: 3px; }
+  .btn-start { background: #16a34a; color: white; }
+  .btn-stop { background: #dc2626; color: white; }
+  .btn-add { background: #38bdf8; color: #0f172a; }
+  .btn-del { background: #64748b; color: white; }
+  .btn-primary { background: #38bdf8; color: #0f172a; padding: 10px 18px; font-size: 14px; }
+  input, select { padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; font-size: 14px; }
+  input[type="number"] { width: 90px; }
+  .form-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
+  .timer { font-size: 22px; font-weight: bold; color: #facc15; font-family: monospace; }
+  .cost { color: #22d3ee; font-weight: bold; }
+  .invoice { background: #0f172a; padding: 15px; border-radius: 8px; border: 1px dashed #38bdf8; }
+  .invoice-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e293b; }
+  .invoice-total { display: flex; justify-content: space-between; padding-top: 10px; font-size: 18px; font-weight: bold; color: #22d3ee; margin-top: 10px; border-top: 2px solid #38bdf8; }
+  .products-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .product-chip { padding: 6px 12px; background: #334155; border-radius: 20px; cursor: pointer; font-size: 13px; border: 1px solid #475569; }
+  .product-chip:hover { background: #38bdf8; color: #0f172a; }
+  .report-item { padding: 10px; background: #0f172a; margin-bottom: 8px; border-radius: 6px; border-right: 3px solid #22d3ee; }
+  .report-item small { color: #94a3b8; }
+  .empty { text-align: center; padding: 20px; color: #64748b; }
+  .total-box { background: #334155; padding: 12px; border-radius: 8px; text-align: center; margin-top: 12px; }
+  .total-box span { color: #facc15; font-size: 20px; font-weight: bold; }
+  h3 { margin-bottom: 10px; color: #94a3b8; }
+</style>
+</head>
+<body>
+
+<h1>🎮 محل بلايستيشن</h1>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('devices')">🖥️ الأجهزة</button>
+  <button class="tab-btn" onclick="showTab('reports')">📊 التقارير اليومية</button>
+  <button class="tab-btn" onclick="showTab('products')">📦 المنتجات</button>
+</div>
+
+<!-- الأجهزة -->
+<div id="devices" class="section active">
+  <div class="card">
+    <h3>إضافة جهاز جديد</h3>
+    <div class="form-row">
+      <input type="text" id="newDeviceName" placeholder="اسم الجهاز (مثال: PS5 - جهاز 1)" style="flex:1; min-width: 200px;">
+      <input type="number" id="newDevicePrice" placeholder="سعر الساعة" value="30">
+      <button class="btn btn-primary" onclick="addDevice()">+ إضافة جهاز</button>
+    </div>
+  </div>
+
+  <div id="devicesList"></div>
+</div>
+
+<!-- التقارير -->
+<div id="reports" class="section">
+  <div class="card">
+    <h3>📊 تقرير اليوم</h3>
+    <div id="reportsList"></div>
+    <div class="total-box">
+      إجمالي مبيعات اليوم: <span id="todayTotal">0</span> جنيه
+    </div>
+    <button class="btn btn-del" style="margin-top:12px; width:100%;" onclick="clearReports()">🗑️ تصفير تقارير اليوم</button>
+  </div>
+</div>
+
+<!-- المنتجات -->
+<div id="products" class="section">
+  <div class="card">
+    <h3>إضافة منتج جديد</h3>
+    <div class="form-row">
+      <input type="text" id="newProductName" placeholder="اسم المنتج" style="flex:1; min-width: 180px;">
+      <input type="number" id="newProductPrice" placeholder="السعر" value="10">
+      <button class="btn btn-primary" onclick="addProduct()">+ إضافة منتج</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>قائمة المنتجات</h3>
+    <div id="productsList"></div>
+  </div>
+</div>
+
+<script>
+// ===== البيانات =====
+let devices = JSON.parse(localStorage.getItem('ps_devices') || '[]');
+let products = JSON.parse(localStorage.getItem('ps_products') || '[]');
+let reports = JSON.parse(localStorage.getItem('ps_reports') || '[]');
+let invoices = JSON.parse(localStorage.getItem('ps_invoices') || '{}'); // {deviceId: [{name, price, type}]}
+
+function save() {
+  localStorage.setItem('ps_devices', JSON.stringify(devices));
+  localStorage.setItem('ps_products', JSON.stringify(products));
+  localStorage.setItem('ps_reports', JSON.stringify(reports));
+  localStorage.setItem('ps_invoices', JSON.stringify(invoices));
+}
+
+// ===== التبويبات =====
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ===== إدارة الأجهزة =====
+function addDevice() {
+  const name = document.getElementById('newDeviceName').value.trim();
+  const price = parseFloat(document.getElementById('newDevicePrice').value) || 30;
+  if (!name) return alert('اكتب اسم الجهاز');
+  devices.push({ id: Date.now(), name, pricePerHour: price, startTime: null });
+  document.getElementById('newDeviceName').value = '';
+  save(); renderDevices();
+}
+
+function deleteDevice(id) {
+  if (!confirm('تأكيد حذف الجهاز؟')) return;
+  devices = devices.filter(d => d.id !== id);
+  delete invoices[id];
+  save(); renderDevices();
+}
+
+function startDevice(id) {
+  const d = devices.find(x => x.id === id);
+  if (d.startTime) return;
+  d.startTime = Date.now();
+  invoices[id] = invoices[id] || [];
+  save(); renderDevices();
+}
+
+function stopDevice(id) {
+  const d = devices.find(x => x.id === id);
+  if (!d.startTime) return;
+  const elapsedMs = Date.now() - d.startTime;
+  const hours = elapsedMs / 3600000;
+  const timeCost = Math.round(hours * d.pricePerHour * 100) / 100;
+  
+  const prods = invoices[id] || [];
+  const prodCost = prods.reduce((s, p) => s + p.price, 0);
+  const total = Math.round((timeCost + prodCost) * 100) / 100;
+  
+  // عرض فاتورة
+  showInvoice(d.name, elapsedMs, timeCost, prods, prodCost, total);
+  
+  // حفظ التقرير
+  reports.push({
+    device: d.name,
+    time: Math.floor(elapsedMs / 60000), // دقائق
+    timeCost,
+    products: [...prods],
+    prodCost,
+    total,
+    date: new Date().toISOString()
+  });
+  
+  d.startTime = null;
+  invoices[id] = [];
+  save(); renderDevices(); renderReports();
+}
+
+function showInvoice(name, ms, timeCost, prods, prodCost, total) {
+  const mins = Math.floor(ms / 60000);
+  const hrs = Math.floor(mins / 60);
+  let html = `<h3>🧾 فاتورة: ${name}</h3>`;
+  html += `<div class="invoice">`;
+  html += `<div class="invoice-item"><span>⏱️ وقت اللعب (${hrs}س ${mins%60}د)</span><span class="cost">${timeCost} ج</span></div>`;
+  prods.forEach((p, i) => {
+    html += `<div class="invoice-item"><span>${p.name}</span><span class="cost">${p.price} ج</span></div>`;
+  });
+  html += `<div class="invoice-total"><span>الإجمالي</span><span>${total} ج</span></div>`;
+  html += `</div>`;
+  html += `<button class="btn btn-primary" style="margin-top:12px;width:100%" onclick="closeInvoice()">✅ تم (إغلاق)</button>`;
+  document.getElementById('invoiceModal').innerHTML = html;
+  document.getElementById('invoiceModal').style.display = 'block';
+  document.getElementById('overlay').style.display = 'block';
+}
+
+function closeInvoice() {
+  document.getElementById('invoiceModal').style.display = 'none';
+  document.getElementById('overlay').style.display = 'none';
+}
+
+function addProductToDevice(deviceId, productId) {
+  const p = products.find(x => x.id === productId);
+  if (!p) return;
+  invoices[deviceId] = invoices[deviceId] || [];
+  invoices[deviceId].push({ name: p.name, price: p.price });
+  save(); renderDevices();
+}
+
+function renderDevices() {
+  const list = document.getElementById('devicesList');
+  if (devices.length === 0) {
+    list.innerHTML = '<div class="empty">لا توجد أجهزة. أضف جهاز من الأعلى.</div>';
+    return;
+  }
+  list.innerHTML = devices.map(d => {
+    const isBusy = !!d.startTime;
+    const prods = invoices[d.id] || [];
+    const prodCost = prods.reduce((s, p) => s + p.price, 0);
+    let timer = '';
+    if (isBusy) {
+      const ms = Date.now() - d.startTime;
+      const m = Math.floor(ms / 60000);
+      const s = Math.floor((ms % 60000) / 1000);
+      timer = `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+    return `
+      <div class="device-card">
+        <div class="device-header">
+          <span class="device-name">${d.name}</span>
+          <span class="status ${isBusy ? 'busy' : 'free'}">${isBusy ? '🔴 مشغول' : '🟢 متاح'}</span>
+        </div>
+        <div class="form-row">
+          <span>سعر الساعة: <b>${d.pricePerHour} ج</b></span>
+          ${isBusy ? `<span class="timer" data-id="${d.id}">${timer}</span>` : ''}
+        </div>
+        <div class="form-row">
+          ${isBusy 
+            ? `<button class="btn btn-stop" onclick="stopDevice(${d.id})">⏹️ إنهاء + فاتورة</button>`
+            : `<button class="btn btn-start" onclick="startDevice(${d.id})">▶️ بدء الوقت</button>`}
+          <button class="btn btn-del" onclick="deleteDevice(${d.id})">🗑️</button>
+        </div>
+        <div>
+          <small style="color:#94a3b8">📦 منتجات الجهاز (${prods.length}):</small>
+          <div class="products-list">
+            ${products.length === 0 ? '<small style="color:#64748b">لا توجد منتجات مضافة. أضف من تبويب المنتجات.</small>' : ''}
+            ${products.map(p => `<span class="product-chip" onclick="addProductToDevice(${d.id}, ${p.id})">${p.name} +${p.price}ج</span>`).join('')}
+          </div>
+          ${prods.length > 0 ? `<div style="margin-top:8px; font-size:13px; color:#22d3ee">إجمالي المنتجات: ${prodCost} ج</div>` : ''}
+          ${prods.length > 0 ? `<div class="products-list" style="margin-top:6px">${prods.map((p,i)=>`<span class="product-chip" style="background:#7f1d1d">${p.name} -${p.price}ج <b style="cursor:pointer" onclick="removeDeviceProduct(${d.id},${i})">×</b></span>`).join('')}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function removeDeviceProduct(deviceId, idx) {
+  invoices[deviceId].splice(idx, 1);
+  save(); renderDevices();
+}
+
+// ===== التحديث الحي =====
+setInterval(() => {
+  devices.forEach(d => {
+    if (d.startTime) {
+      const el = document.querySelector(`.timer[data-id="${d.id}"]`);
+      if (el) {
+        const ms = Date.now() - d.startTime;
+        const m = Math.floor(ms / 60000);
+        const s = Math.floor((ms % 60000) / 1000);
+        el.textContent = `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      }
+    }
+  });
+}, 1000);
+
+// ===== المنتجات =====
+function addProduct() {
+  const name = document.getElementById('newProductName').value.trim();
+  const price = parseFloat(document.getElementById('newProductPrice').value) || 10;
+  if (!name) return alert('اكتب اسم المنتج');
+  products.push({ id: Date.now(), name, price });
+  document.getElementById('newProductName').value = '';
+  save(); renderProducts(); renderDevices();
+}
+
+function deleteProduct(id) {
+  if (!confirm('حذف المنتج؟')) return;
+  products = products.filter(p => p.id !== id);
+  save(); renderProducts(); renderDevices();
+}
+
+function renderProducts() {
+  const list = document.getElementById('productsList');
+  if (products.length === 0) {
+    list.innerHTML = '<div class="empty">لا توجد منتجات. أضف منتج من الأعلى.</div>';
+    return;
+  }
+  list.innerHTML = products.map(p => `
+    <div class="device-card" style="border-right-color:#facc15">
+      <div class="device-header">
+        <span class="device-name">${p.name}</span>
+        <span style="color:#22d3ee; font-weight:bold">${p.price} ج</span>
+      </div>
+      <button class="btn btn-del" onclick="deleteProduct(${p.id})">🗑️ حذف</button>
+    </div>
+  `).join('');
+}
+
+// ===== التقارير =====
+function renderReports() {
+  const today = new Date().toDateString();
+  const todayReports = reports.filter(r => new Date(r.date).toDateString() === today);
+  
+  const list = document.getElementById('reportsList');
+  if (todayReports.length === 0) {
+    list.innerHTML = '<div class="empty">لا توجد فواتير اليوم.</div>';
+  } else {
+    list.innerHTML = todayReports.slice().reverse().map(r => `
+      <div class="report-item">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px">
+          <b>${r.device}</b>
+          <span class="cost">${r.total} ج</span>
+        </div>
+        <small>⏱️ ${r.time} دقيقة = ${r.timeCost} ج</small><br>
+        ${r.products.length > 0 ? `<small>📦 ${r.products.map(p=>p.name).join(', ')} = ${r.prodCost} ج</small>` : '<small>لا منتجات</small>'}
+      </div>
+    `).join('');
+  }
+  
+  const total = todayReports.reduce((s, r) => s + r.total, 0);
+  document.getElementById('todayTotal').textContent = Math.round(total * 100) / 100;
+}
+
+function clearReports() {
+  if (!confirm('تصفير كل تقارير اليوم؟')) return;
+  const today = new Date().toDateString();
+  reports = reports.filter(r => new Date(r.date).toDateString() !== today);
+  save(); renderReports();
+}
+
+// ===== تهيئة =====
+renderDevices();
+renderProducts();
+renderReports();
+</script>
+
+<!-- Modal الفاتورة -->
+<div id="overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:999"></div>
+<div id="invoiceModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e293b; padding:20px; border-radius:12px; width:90%; max-width:420px; z-index:1000; max-height:85vh; overflow-y:auto"></div>
+
+</body>
+</html>
